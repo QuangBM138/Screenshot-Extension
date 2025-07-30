@@ -24,5 +24,16 @@
                 "content.js"
             ]
         }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "viewer.html",
+                "viewer.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
     ]
 }

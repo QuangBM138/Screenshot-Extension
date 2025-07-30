@@ -1,61 +1,36 @@
 let canvas = document.createElement('canvas');
 let ctx = canvas.getContext('2d');
-let preview;
-let statusDiv;
-let bwModeSelect;
-let originalImageData = null; // Lưu ảnh gốc
-let isProcessed = false; // Kiểm tra đã xử lý chưa
+let originalImageData = null;
+let isProcessed = false;
 let colorRules = []; // Lưu các quy tắc màu
-let customColorControls;
-let colorPicker;
-let colorAction;
-let colorRulesContainer;
 
-// Đảm bảo DOM load xong
+// Elements
+const imageViewer = document.getElementById('imageViewer');
+const noImage = document.getElementById('noImage');
+const convertBtn = document.getElementById('convertBtn');
+const restoreBtn = document.getElementById('restoreBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const copyBtn = document.getElementById('copyBtn');
+const bwModeSelect = document.getElementById('bwMode');
+const statusDiv = document.getElementById('status');
+const imageInfo = document.getElementById('imageInfo');
+const imageSize = document.getElementById('imageSize');
+const imageStatus = document.getElementById('imageStatus');
+const customColorControls = document.getElementById('customColorControls');
+const colorPicker = document.getElementById('colorPicker');
+const colorAction = document.getElementById('colorAction');
+const addColorRuleBtn = document.getElementById('addColorRuleBtn');
+const clearAllRulesBtn = document.getElementById('clearAllRulesBtn');
+const colorRulesContainer = document.getElementById('colorRules');
+
+// Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    preview = document.getElementById('preview');
-    statusDiv = document.getElementById('status');
-    bwModeSelect = document.getElementById('bwMode');
-    customColorControls = document.getElementById('customColorControls');
-    colorPicker = document.getElementById('colorPicker');
-    colorAction = document.getElementById('colorAction');
-    colorRulesContainer = document.getElementById('colorRules');
-    
-    // Thêm event listeners cho tất cả buttons
-    const buttons = document.querySelectorAll('button[data-action]');
-    buttons.forEach(button => {
-        button.addEventListener('click', function() {
-            const action = this.getAttribute('data-action');
-            const mode = this.getAttribute('data-mode');
-            
-            switch(action) {
-                case 'capture':
-                    capture(mode);
-                    break;
-                case 'convertToBW':
-                    convertToBW();
-                    break;
-                case 'downloadImage':
-                    downloadImage();
-                    break;
-                case 'restoreOriginal':
-                    restoreOriginal();
-                    break;
-                case 'viewInTab':
-                    viewInTab();
-                    break;
-                case 'copyImage':
-                    copyImage();
-                    break;
-                case 'addColorRule':
-                    addColorRule();
-                    break;
-                case 'clearAllRules':
-                    clearAllRules();
-                    break;
-            }
-        });
-    });
+    convertBtn.addEventListener('click', convertToBW);
+    restoreBtn.addEventListener('click', restoreOriginal);
+    downloadBtn.addEventListener('click', downloadImage);
+    copyBtn.addEventListener('click', copyImage);
+    addColorRuleBtn.addEventListener('click', addColorRule);
+    clearAllRulesBtn.addEventListener('click', clearAllRules);
     
     // Thêm event listener cho dropdown mode
     if (bwModeSelect) {
@@ -68,13 +43,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Thêm event listener cho preview image để chọn màu
-    if (preview) {
-        preview.addEventListener('click', function(e) {
+    // Thêm event listener cho image viewer để chọn màu
+    if (imageViewer) {
+        imageViewer.addEventListener('click', function(e) {
             if (bwModeSelect && bwModeSelect.value === 'custom') {
                 pickColorFromImage(e);
             }
         });
+    }
+    
+    // Kiểm tra xem có ảnh được truyền từ popup không
+    const urlParams = new URLSearchParams(window.location.search);
+    const imageData = urlParams.get('image');
+    
+    if (imageData) {
+        loadImage(imageData);
     }
 });
 
@@ -84,62 +67,44 @@ function showStatus(message) {
     }
 }
 
-function capture(mode) {
-    console.log('Capturing with mode:', mode);
-    showStatus('Đang chụp màn hình...');
-    
-    chrome.runtime.sendMessage({ action: 'capture', mode }, (response) => {
-        console.log('Response received:', response);
+function loadImage(imageDataUrl) {
+    const img = new Image();
+    img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
         
-        if (chrome.runtime.lastError) {
-            console.error('Error:', chrome.runtime.lastError);
-            showStatus('Lỗi: ' + chrome.runtime.lastError.message);
-            alert('Lỗi khi chụp màn hình: ' + chrome.runtime.lastError.message);
-            return;
-        }
+        // Lưu ảnh gốc
+        originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        isProcessed = false;
         
-        if (response && response.error) {
-            console.error('Background error:', response.error);
-            showStatus('Lỗi: ' + response.error);
-            alert('Lỗi khi chụp màn hình: ' + response.error);
-            return;
-        }
+        // Hiển thị ảnh
+        imageViewer.src = canvas.toDataURL('image/png');
+        imageViewer.style.display = 'block';
+        noImage.style.display = 'none';
         
-        if (response && response.image) {
-            let img = new Image();
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                
-                // Lưu ảnh gốc
-                originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                isProcessed = false;
-                
-                if (preview) {
-                    preview.src = canvas.toDataURL('image/png');
-                    preview.style.display = 'block';
-                }
-                showStatus('Chụp màn hình thành công!');
-            };
-            img.onerror = () => {
-                console.error('Lỗi khi tải ảnh');
-                showStatus('Lỗi khi tải ảnh');
-                alert('Lỗi khi tải ảnh chụp màn hình');
-            };
-            img.src = response.image;
-        } else {
-            console.error('Không nhận được ảnh từ background script');
-            showStatus('Không thể chụp màn hình');
-            alert('Không thể chụp màn hình. Vui lòng thử lại.');
-        }
-    });
+        // Cập nhật thông tin
+        updateImageInfo();
+        showStatus('Ảnh đã được tải thành công!');
+    };
+    img.onerror = () => {
+        showStatus('Lỗi khi tải ảnh');
+    };
+    img.src = imageDataUrl;
+}
+
+function updateImageInfo() {
+    if (canvas.width && canvas.height) {
+        imageSize.textContent = `${canvas.width} x ${canvas.height} pixels`;
+        imageStatus.textContent = isProcessed ? 'Đã xử lý' : 'Gốc';
+        imageInfo.style.display = 'block';
+    }
 }
 
 function pickColorFromImage(e) {
     if (!canvas.width || !canvas.height) return;
     
-    const rect = preview.getBoundingClientRect();
+    const rect = imageViewer.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (canvas.width / rect.width);
     const y = (e.clientY - rect.top) * (canvas.height / rect.height);
     
@@ -193,7 +158,7 @@ function updateColorRulesDisplay() {
     colorRulesContainer.innerHTML = '';
     
     if (colorRules.length === 0) {
-        colorRulesContainer.innerHTML = '<div style="color: #666; font-style: italic; text-align: center; padding: 10px;">Chưa có quy tắc nào</div>';
+        colorRulesContainer.innerHTML = '<div style="color: #666; font-style: italic; text-align: center; padding: 15px;">Chưa có quy tắc nào</div>';
         return;
     }
     
@@ -203,7 +168,7 @@ function updateColorRulesDisplay() {
         ruleElement.innerHTML = `
             <div class="color-preview" style="background-color: ${rule.color}"></div>
             <span>${rule.color} → ${rule.action === 'toWhite' ? 'Trắng' : 'Đen'}</span>
-            <button class="remove-rule-btn" data-rule-id="${rule.id}" style="background: #dc3545; padding: 2px 6px; font-size: 10px;">×</button>
+            <button class="remove-rule-btn" data-rule-id="${rule.id}" style="background: #dc3545; padding: 4px 8px; font-size: 12px;">×</button>
         `;
         
         // Thêm event listener cho nút xóa
@@ -225,8 +190,7 @@ function removeColorRule(id) {
 
 function convertToBW() {
     if (!canvas.width || !canvas.height || !originalImageData) {
-        showStatus('Vui lòng chụp màn hình trước');
-        alert('Vui lòng chụp màn hình trước khi chuyển đen trắng');
+        showStatus('Không có ảnh để xử lý');
         return;
     }
     
@@ -339,9 +303,8 @@ function convertToBW() {
     ctx.putImageData(imageData, 0, 0);
     isProcessed = true;
     
-    if (preview) {
-        preview.src = canvas.toDataURL('image/png');
-    }
+    imageViewer.src = canvas.toDataURL('image/png');
+    updateImageInfo();
 }
 
 function isColorSimilar(color1, color2, tolerance = 30) {
@@ -373,16 +336,14 @@ function restoreOriginal() {
     ctx.putImageData(originalImageData, 0, 0);
     isProcessed = false;
     
-    if (preview) {
-        preview.src = canvas.toDataURL('image/png');
-    }
+    imageViewer.src = canvas.toDataURL('image/png');
+    updateImageInfo();
     showStatus('Đã khôi phục ảnh gốc!');
 }
 
 function copyImage() {
     if (!canvas.width || !canvas.height) {
-        showStatus('Vui lòng chụp màn hình trước');
-        alert('Vui lòng chụp màn hình trước khi copy');
+        showStatus('Không có ảnh để copy');
         return;
     }
     
@@ -397,32 +358,9 @@ function copyImage() {
     });
 }
 
-function viewInTab() {
-    if (!canvas.width || !canvas.height) {
-        showStatus('Vui lòng chụp màn hình trước');
-        alert('Vui lòng chụp màn hình trước khi xem trong tab');
-        return;
-    }
-    
-    // Tạo URL với ảnh hiện tại
-    const imageData = canvas.toDataURL('image/png');
-    const viewerUrl = chrome.runtime.getURL('viewer.html') + '?image=' + encodeURIComponent(imageData);
-    
-    // Mở tab mới
-    chrome.tabs.create({ url: viewerUrl }, (tab) => {
-        if (chrome.runtime.lastError) {
-            console.error('Lỗi khi mở tab:', chrome.runtime.lastError);
-            showStatus('Lỗi khi mở tab mới');
-        } else {
-            showStatus('Đã mở ảnh trong tab mới!');
-        }
-    });
-}
-
 function downloadImage() {
     if (!canvas.width || !canvas.height) {
-        showStatus('Vui lòng chụp màn hình trước');
-        alert('Vui lòng chụp màn hình trước khi tải xuống');
+        showStatus('Không có ảnh để tải xuống');
         return;
     }
     
@@ -435,9 +373,8 @@ function downloadImage() {
         if (chrome.runtime.lastError) {
             console.error('Lỗi khi tải xuống:', chrome.runtime.lastError);
             showStatus('Lỗi khi tải xuống');
-            alert('Lỗi khi tải xuống: ' + chrome.runtime.lastError.message);
         } else {
             showStatus('Đã tải xuống thành công!');
         }
     });
-}
+} 

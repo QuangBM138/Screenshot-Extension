@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Screenshot Viewer</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+                background: #f5f5f5;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .header {
+                background: #4285f4;
+                color: white;
+                padding: 20px;
+                text-align: center;
+            }
+
+            .header h1 {
+                margin: 0;
+                font-size: 24px;
+            }
+
+            .controls {
+                padding: 20px;
+                background: #f8f9fa;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .control-group {
+                display: flex;
+                gap: 15px;
+                align-items: center;
+                margin-bottom: 15px;
+                flex-wrap: wrap;
+            }
+
+            .control-group label {
+                font-weight: bold;
+                min-width: 120px;
+            }
+
+            select,
+            button {
+                padding: 10px 15px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+
+            select {
+                min-width: 200px;
+            }
+
+            button {
+                background: #4285f4;
+                color: white;
+                border: none;
+                cursor: pointer;
+                transition: background 0.3s;
+            }
+
+            button:hover {
+                background: #3367d6;
+            }
+
+            button.restore {
+                background: #34a853;
+            }
+
+            button.restore:hover {
+                background: #2d8f47;
+            }
+
+            button.download {
+                background: #ea4335;
+            }
+
+            button.download:hover {
+                background: #d33426;
+            }
+
+            button.copy {
+                background: #9c27b0;
+            }
+
+            button.copy:hover {
+                background: #7b1fa2;
+            }
+
+            button.clear {
+                background: #dc3545;
+            }
+
+            button.clear:hover {
+                background: #c82333;
+            }
+
+            .image-container {
+                padding: 20px;
+                text-align: center;
+                min-height: 400px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            #imageViewer {
+                max-width: 100%;
+                max-height: 80vh;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                cursor: crosshair;
+            }
+
+            .status {
+                text-align: center;
+                padding: 10px;
+                color: #666;
+                font-size: 14px;
+            }
+
+            .no-image {
+                color: #999;
+                font-size: 18px;
+                font-style: italic;
+            }
+
+            .image-info {
+                background: #f8f9fa;
+                padding: 15px;
+                margin: 20px;
+                border-radius: 4px;
+                border-left: 4px solid #4285f4;
+            }
+
+            .image-info h3 {
+                margin: 0 0 10px 0;
+                color: #333;
+            }
+
+            .image-info p {
+                margin: 5px 0;
+                color: #666;
+            }
+
+            .color-controls {
+                margin: 20px;
+                padding: 15px;
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+                border-radius: 4px;
+            }
+
+            .color-controls h4 {
+                margin: 0 0 15px 0;
+                color: #856404;
+            }
+
+            .color-picker {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                margin: 15px 0;
+            }
+
+            .color-picker input[type="color"] {
+                width: 50px;
+                height: 50px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+            .color-picker select {
+                flex: 1;
+                margin: 0;
+            }
+
+            .color-info {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                margin: 10px 0;
+                padding: 10px;
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+
+            .color-preview {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                border: 2px solid #ddd;
+            }
+
+            .button-group {
+                display: flex;
+                gap: 10px;
+                margin: 15px 0;
+            }
+
+            .button-group button {
+                flex: 1;
+                margin: 0;
+            }
+
+            .color-actions {
+                display: flex;
+                gap: 10px;
+                margin: 15px 0;
+            }
+
+            .color-actions button {
+                flex: 1;
+                margin: 0;
+                padding: 10px;
+                font-size: 14px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🖼️ Screenshot Viewer</h1>
+                <p>Xem và xử lý ảnh chụp màn hình</p>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="bwMode">Chế độ chuyển đen trắng:</label>
+                    <select id="bwMode">
+                        <option value="enhanced">🎨 Cải tiến (4 mức độ)</option>
+                        <option value="classic">⚫ Cổ điển (Đen/Trắng)</option>
+                        <option value="grayscale">🌫️ Xám (256 mức độ)</option>
+                        <option value="custom">🎯 Tùy chỉnh (Chọn màu)</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="convertBtn">⚫ Chuyển đen trắng</button>
+                    <button id="restoreBtn" class="restore">🔄 Quay lại ảnh gốc</button>
+                    <button id="copyBtn" class="copy">📋 Copy ảnh</button>
+                    <button id="downloadBtn" class="download">💾 Tải xuống</button>
+                </div>
+            </div>
+
+            <div id="customColorControls" class="color-controls" style="display: none;">
+                <h4>🎨 Chọn màu để chuyển đổi:</h4>
+                <div class="color-picker">
+                    <input type="color" id="colorPicker" value="#ffffff">
+                    <select id="colorAction">
+                        <option value="toWhite">→ Trắng</option>
+                        <option value="toBlack">→ Đen</option>
+                    </select>
+                </div>
+                <div class="color-actions">
+                    <button id="addColorRuleBtn">➕ Thêm quy tắc</button>
+                    <button id="clearAllRulesBtn" class="clear">🗑️ Xóa tất cả</button>
+                </div>
+                <div id="colorRules"></div>
+            </div>
+
+            <div class="image-container">
+                <img id="imageViewer" style="display: none;">
+                <div id="noImage" class="no-image">
+                    📸 Chưa có ảnh nào được tải<br>
+                    <small>Vui lòng chụp màn hình từ extension</small>
+                </div>
+            </div>
+
+            <div id="imageInfo" class="image-info" style="display: none;">
+                <h3>📊 Thông tin ảnh</h3>
+                <p><strong>Kích thước:</strong> <span id="imageSize">-</span></p>
+                <p><strong>Trạng thái:</strong> <span id="imageStatus">-</span></p>
+            </div>
+
+            <div id="status" class="status"></div>
+        </div>
+
+        <script src="viewer.js"></script>
+    </body>
+
+</html>
