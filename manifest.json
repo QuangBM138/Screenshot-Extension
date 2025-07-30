@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "Screenshot Extension",
+    "version": "1.0",
+    "description": "Capture screen with options: full screen, selected area, or full page, with black-and-white conversion.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "downloads",
+        "tabs"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ]
+}

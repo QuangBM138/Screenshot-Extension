@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Screenshot Extension</title>
+    <style>
+      body {
+        width: 280px;
+        padding: 15px;
+        font-family: Arial, sans-serif;
+        margin: 0;
+      }
+
+      button {
+        display: block;
+        width: 100%;
+        margin: 8px 0;
+        padding: 10px;
+        background: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      button:hover {
+        background: #3367d6;
+      }
+
+      button.restore {
+        background: #34a853;
+      }
+
+      button.restore:hover {
+        background: #2d8f47;
+      }
+
+      select {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      .option-group {
+        margin: 10px 0;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
+
+      .option-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      #preview {
+        max-width: 100%;
+        margin-top: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .status {
+        color: #666;
+        font-size: 12px;
+        text-align: center;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <button data-action="capture" data-mode="full">📸 Chụp toàn màn hình</button>
+    <button data-action="capture" data-mode="area">🎯 Chụp vùng chọn</button>
+    <button data-action="capture" data-mode="page">📄 Chụp toàn trang</button>
+
+    <div class="option-group">
+      <label for="bwMode">Chế độ chuyển đen trắng:</label>
+      <select id="bwMode">
+        <option value="enhanced">🎨 Cải tiến (4 mức độ)</option>
+        <option value="classic">⚫ Cổ điển (Đen/Trắng)</option>
+        <option value="grayscale">🌫️ Xám (256 mức độ)</option>
+      </select>
+    </div>
+
+    <button data-action="convertToBW">⚫ Chuyển đen trắng</button>
+    <button data-action="restoreOriginal" class="restore">🔄 Quay lại ảnh gốc</button>
+    <button data-action="downloadImage">💾 Tải xuống</button>
+    <img id="preview" style="display: none;">
+    <div id="status" class="status"></div>
+    <script src="popup.js"></script>
+  </body>
+
+</html>
